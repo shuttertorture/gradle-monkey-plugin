@@ -27,35 +27,12 @@ package com.scompt.gradle.monkey
 import org.gradle.api.Project
 
 class MonkeyPluginExtension {
-    def Object outputDirectory
-    def Object apkDirectory
-    def Boolean teamCityLog = false
-    def String apkFileNameRegex = ".*debug-unaligned.*.apk"
-    def String testApkFileNameRegex = ".*test-unaligned.*.apk"
+    def boolean failOnFailure = false
+    def int eventCount = 100
 
     private final Project project
 
     public MonkeyPluginExtension(Project project) {
         this.project = project
-        this.outputDirectory = {
-            return project.project.getBuildDir()
-        }
     }
-
-    File getOutputDirectory() {
-        return project.file(outputDirectory)
-    }
-
-    void setOutputDirectory(Object outputDirectory) {
-        this.outputDirectory = outputDirectory
-    }
-
-    File getApkDirectory() {
-        return project.file(apkDirectory)
-    }
-
-    void setApkDirectory(Object apkDirectory) {
-        this.apkDirectory = apkDirectory
-    }
-
 }

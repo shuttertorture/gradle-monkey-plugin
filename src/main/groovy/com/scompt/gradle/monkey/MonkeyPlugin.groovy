@@ -27,6 +27,12 @@ package com.scompt.gradle.monkey
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+import com.android.build.gradle.AppExtension
+import com.android.build.gradle.AppPlugin
+import com.android.build.gradle.api.ApplicationVariant
+
+import org.gradle.api.plugins.JavaBasePlugin
+
 class MonkeyPlugin implements Plugin<Project> {
 
     void apply(Project project) {
@@ -40,7 +46,25 @@ class MonkeyPlugin implements Plugin<Project> {
     }
 
     void applyTasks(final Project project) {
-        project.task('monkey', type: MonkeyTestTask, group: 'Monkey')
+        if (!project.plugins.hasPlugin(AppPlugin)) {
+            throw new IllegalStateException("gradle-android-plugin not found")
+        }
+
+        AppExtension android = project.android
+        android.applicationVariants.all { ApplicationVariant variant ->
+            // TODO: There's probably a better way to get the package name of the variant being tested.
+            String packageName = variant.generateBuildConfig.packageName
+
+            if (variant.processManifest.packageNameOverride != null) {
+                packageName = variant.processManifest.packageNameOverride
+            }
+
+            MonkeyTestTask task = project.tasks.create("monkey${variant.name}", MonkeyTestTask)
+            task.group = JavaBasePlugin.VERIFICATION_GROUP
+            task.description = "Run the monkey tests on the first connected device"
+            task.packageName = packageName
+            task.outputs.upToDateWhen { false }
+        }
     }
 
 

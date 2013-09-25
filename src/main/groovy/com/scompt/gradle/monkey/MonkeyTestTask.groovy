@@ -34,64 +34,79 @@ import com.android.ddmlib.CollectingOutputReceiver
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class MonkeyTestTask extends DefaultTask {
 
-    MonkeyTestTask() {
-        super()
-        this.description = "Run monkey test on all first connected device."
-    }
+    String packageName;
+
+    int eventCount;
 
     @TaskAction
     def runMonkeyTest() throws IOException {
-        CollectingOutputReceiver receiver
         ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(project.android.plugin.sdkParser)
         cdp.init()
         ConnectedDevice device = cdp.devices[0]
-        
-        receiver = new CollectingOutputReceiver()
-        device.executeShellCommand("dumpsys power", receiver, 30, TimeUnit.SECONDS)
-        Collection powerStateLines = receiver.output.split("\\r?\\n").findAll {l -> l.matches("^[ ]*mPowerState.*")}
-        
-        if (!powerStateLines) {
-            throw new GradleException("Couldn't determine if device is locked")
+        logger.info("Found device " + device.name)
+
+        CollectingOutputReceiver receiver = new CollectingOutputReceiver()
+        String monkeyCommand = String.format("monkey -p %s -vv %d", packageName, eventCount)
+        device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
+
+        String monkeyOutput = receiver.output
+        MonkeyResult result = parseMonkeyOutput(monkeyOutput)
+
+        if (logger.isDebugEnabled()) {
+            println monkeyOutput
         }
-        
-        String powerStatus = powerStateLines[0].replaceFirst("^[ ]*mPowerState=", '')
-        if (powerStatus.equals("0") || powerStatus.equals("")) {
-            device.executeShellCommand("input keyevent KEYCODE_POWER", new CollectingOutputReceiver(), 30, TimeUnit.SECONDS)
+
+        if (result.status != MonkeyResult.ResultStatus.Success && project.monkey.failOnFailure) {
+            System.exit(1)
         }
-        
-        receiver = new CollectingOutputReceiver()
-        device.executeShellCommand("monkey -p com.autoscout24.debug -vv 5", receiver, 30, TimeUnit.SECONDS)
-        
-        println 'asdf' + receiver.output + 'asdf'
     }
 
-    def getFile(String regex) {
-        def pattern = Pattern.compile(regex)
-
-        if (!project.spoon.apkDirectory.exists()) {
-            throw new IllegalStateException("OutputDirectory not found")
+    // Adapted from https://github.com/jenkinsci/android-emulator-plugin/blob/master/src/main/java/hudson/plugins/android_emulator/monkey/MonkeyBuilder.java
+    def parseMonkeyOutput(String monkeyOutput) {
+        // No input, no output
+        if (monkeyOutput == null) {
+            return new MonkeyResult(MonkeyResult.ResultStatus.NothingToParse);
         }
 
-        def fileList = project.spoon.apkDirectory.list(
-                [accept: { d, f -> f ==~ pattern }] as FilenameFilter
-        ).toList()
+        // If we don't recognise any outcomes, then say so
+        MonkeyResult.ResultStatus status = MonkeyResult.ResultStatus.UnrecognisedFormat;
 
-        if (fileList == null || fileList.size() == 0) {
-            return null
+        // Extract common data
+        int totalEventCount = 0;
+        Matcher matcher = Pattern.compile(":Monkey: seed=-?\\d+ count=(\\d+)").matcher(monkeyOutput);
+        if (matcher.find()) {
+            totalEventCount = Integer.parseInt(matcher.group(1));
         }
-        return new File(project.spoon.apkDirectory, fileList[0])
+
+        // Determine outcome
+        int eventsCompleted = 0;
+        if (monkeyOutput.contains("// Monkey finished")) {
+            result = MonkeyResult.ResultStatus.Success;
+            eventsCompleted = totalEventCount;
+        } else {
+            // If it didn't finish, assume failure
+            matcher = Pattern.compile("Events injected: (\\d+)").matcher(monkeyOutput);
+            if (matcher.find()) {
+                eventsCompleted = Integer.parseInt(matcher.group(1));
+            }
+
+            // Determine failure type
+            matcher = Pattern.compile("// (CRASH|NOT RESPONDING)").matcher(monkeyOutput);
+            if (matcher.find()) {
+                String reason = matcher.group(1);
+                if ("CRASH".equals(reason)) {
+                    result = MonkeyResult.ResultStatus.Crash;
+                } else if ("NOT RESPONDING".equals(reason)) {
+                    result = MonkeyResult.ResultStatus.AppNotResponding;
+                }
+            }
+        }
+
+        return new MonkeyResult(status, totalEventCount, eventsCompleted)
     }
-
-    private static File cleanFile(String path) {
-        if (path == null) {
-            return null;
-        }
-        return new File(path);
-    }
-
-
 }
