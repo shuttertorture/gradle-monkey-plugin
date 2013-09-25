@@ -1,0 +1,101 @@
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+version = '0.1-SNAPSHOT'
+group = 'com.scompt.gradle'
+
+ext.archivesBaseName = 'gradle-monkey-plugin'
+ext.isSnapshot = version.endsWith("-SNAPSHOT")
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    groovy localGroovy()
+    compile gradleApi()
+    compile 'com.android.tools.build:gradle:0.5.+'
+}
+
+task sourceJar(type: Jar) {
+    description = 'An archive of the source code for Maven Central'
+    classifier = 'sources'
+    from sourceSets.main.groovy
+}
+
+task groovydocJar(type: Jar) {
+    description = 'An archive of the GroovyDocs for Maven Central'
+    classifier = 'javadoc'
+    from groovydoc
+}
+
+artifacts {
+    archives groovydocJar, sourceJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+// Only *require* signing if we are uploading a non snapshot version
+gradle.taskGraph.whenReady { taskGraph ->
+    tasks.withType(org.gradle.plugins.signing.Sign).all {
+        required = taskGraph.hasTask(":uploadArchives") && !isSnapshot
+    }
+}
+
+
+install.repositories.mavenInstaller {
+    pom.project(pomConfiguration)
+    if (signing.signatory) {
+        beforeDeployment { signing.signPom(it) }
+    }
+}
+
+uploadArchives {
+    repositories.mavenDeployer {
+        if (signing.signatory) {
+            beforeDeployment { signPom(it) }
+        }
+        name = 'mavenCentralReleaseDeployer'
+        repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+            authentication(userName: System.properties['sonatypeUsername'], password: System.properties['sonatypePassword'])
+            releases(updatePolicy: 'always')
+            snapshots(updatePolicy: 'always')
+        }
+        pom.project(pomConfiguration)
+    }
+}
+
+/**
+ * Create POM config and return for use by other tasks.
+ */
+def getPomConfiguration() {
+    return {
+        name 'Gradle Monkey Plugin'
+        packaging 'jar'
+        description 'A Gradle plugin for running Android monkey tests.'
+        url 'https://github.com/scompt/gradle-monkey-plugin'
+        licenses {
+            license {
+                name 'The MIT License'
+                url 'http://www.opensource.org/licenses/mit-license.php'
+                distribution 'repo'
+            }
+        }
+        developers {
+            developer {
+                id 'scompt'
+                name 'Edward Dale'
+                email 'scompt@scompt.com'
+            }
+        }
+        scm {
+            connection 'scm:https://scompt@github.com/scompt/gradle-monkey-plugin'
+            developerConnection 'scm:git@github.com:scompt/gradle-monkey-plugin.git'
+            url 'https://github.com/scompt/gradle-monkey-plugin'
+        }
+    }
+}

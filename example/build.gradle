@@ -1,0 +1,19 @@
+// Example build file
+
+buildscript {
+	repositories {
+   	 mavenLocal()
+   	 mavenCentral()
+	}
+	dependencies {
+		classpath group: 'com.scompt.gradle.monkey', name: 'gradle-monkey-plugin', version: '1.0-SNAPSHOT'
+	}
+}
+
+apply plugin: 'monkey'
+
+monkey {
+    outputDirectory = "target/spoon-output"
+    apkDirectory = "target/apk"
+    teamCityLog = true
+}
