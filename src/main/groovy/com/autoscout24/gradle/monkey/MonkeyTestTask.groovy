@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package com.scompt.gradle.monkey
+package com.autoscout24.gradle.monkey
 
 import com.android.builder.testing.ConnectedDeviceProvider
 import com.android.builder.testing.ConnectedDevice

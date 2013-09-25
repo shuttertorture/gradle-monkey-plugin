@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package com.scompt.gradle.monkey
+package com.autoscout24.gradle.monkey
 
 import org.gradle.api.Project
 

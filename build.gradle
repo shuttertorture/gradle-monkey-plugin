@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 version = '0.1-SNAPSHOT'
-group = 'com.scompt.gradle'
+group = 'com.autoscout24.gradle'
 
 ext.archivesBaseName = 'gradle-monkey-plugin'
 ext.isSnapshot = version.endsWith("-SNAPSHOT")
@@ -77,7 +77,7 @@ def getPomConfiguration() {
         name 'Gradle Monkey Plugin'
         packaging 'jar'
         description 'A Gradle plugin for running Android monkey tests.'
-        url 'https://github.com/scompt/gradle-monkey-plugin'
+        url 'https://github.com/AutoScout24/gradle-monkey-plugin'
         licenses {
             license {
                 name 'The MIT License'
@@ -93,9 +93,9 @@ def getPomConfiguration() {
             }
         }
         scm {
-            connection 'scm:https://scompt@github.com/scompt/gradle-monkey-plugin'
-            developerConnection 'scm:git@github.com:scompt/gradle-monkey-plugin.git'
-            url 'https://github.com/scompt/gradle-monkey-plugin'
+            connection 'scm:https://scompt@github.com/AutoScout24/gradle-monkey-plugin'
+            developerConnection 'scm:git@github.com:AutoScout24/gradle-monkey-plugin.git'
+            url 'https://github.com/AutoScout24/gradle-monkey-plugin'
         }
     }
 }
