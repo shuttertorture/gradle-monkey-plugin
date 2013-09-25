@@ -14,14 +14,20 @@ public class MonkeyResult {
 
     public enum ResultStatus {
         /** Monkey test completed successfully */
-        Success,
+        Success(true),
         /** Application crashed while under test */
-        Crash,
+        Crash(false),
         /** ANR occurred while under test */
-        AppNotResponding,
+        AppNotResponding(false),
         /** No monkey output was found to parse */
-        NothingToParse,
+        NothingToParse(false),
         /** Monkey output was given, but outcome couldn't be determined */
-        UnrecognisedFormat
+        UnrecognisedFormat(false);
+
+        public final isSuccess
+
+        ResultStatus(boolean isSuccess) {
+            this.isSuccess = isSuccess
+        }
     }
 }

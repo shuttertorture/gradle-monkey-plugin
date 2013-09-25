@@ -28,6 +28,7 @@ import org.gradle.api.Project
 
 class MonkeyPluginExtension {
     def boolean failOnFailure = false
+    def boolean teamCityLog = false
     def int eventCount = 100
 
     private final Project project

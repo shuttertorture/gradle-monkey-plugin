@@ -41,8 +41,6 @@ class MonkeyTestTask extends DefaultTask {
 
     String packageName;
 
-    int eventCount;
-
     @TaskAction
     def runMonkeyTest() throws IOException {
         ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(project.android.plugin.sdkParser)
@@ -51,7 +49,7 @@ class MonkeyTestTask extends DefaultTask {
         logger.info("Found device " + device.name)
 
         CollectingOutputReceiver receiver = new CollectingOutputReceiver()
-        String monkeyCommand = String.format("monkey -p %s -vv %d", packageName, eventCount)
+        String monkeyCommand = String.format("monkey -p %s -vv %d", packageName, project.monkey.eventCount)
         device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
 
         String monkeyOutput = receiver.output
@@ -59,6 +57,11 @@ class MonkeyTestTask extends DefaultTask {
 
         if (logger.isDebugEnabled()) {
             println monkeyOutput
+        }
+
+        if (project.monkey.teamCityLog) {
+            println String.format("##teamcity[buildStatus status='%s' text='{build.status.text}, %d/%d events']",
+                    result.status.isSuccess ? "SUCCESS" : "FAILURE", result.eventsCompleted, result.totalEventCount)
         }
 
         if (result.status != MonkeyResult.ResultStatus.Success && project.monkey.failOnFailure) {
@@ -70,7 +73,7 @@ class MonkeyTestTask extends DefaultTask {
     def parseMonkeyOutput(String monkeyOutput) {
         // No input, no output
         if (monkeyOutput == null) {
-            return new MonkeyResult(MonkeyResult.ResultStatus.NothingToParse);
+            return new MonkeyResult(MonkeyResult.ResultStatus.NothingToParse, 0, 0);
         }
 
         // If we don't recognise any outcomes, then say so
@@ -86,7 +89,7 @@ class MonkeyTestTask extends DefaultTask {
         // Determine outcome
         int eventsCompleted = 0;
         if (monkeyOutput.contains("// Monkey finished")) {
-            result = MonkeyResult.ResultStatus.Success;
+            status = MonkeyResult.ResultStatus.Success;
             eventsCompleted = totalEventCount;
         } else {
             // If it didn't finish, assume failure
@@ -100,9 +103,9 @@ class MonkeyTestTask extends DefaultTask {
             if (matcher.find()) {
                 String reason = matcher.group(1);
                 if ("CRASH".equals(reason)) {
-                    result = MonkeyResult.ResultStatus.Crash;
+                    status = MonkeyResult.ResultStatus.Crash;
                 } else if ("NOT RESPONDING".equals(reason)) {
-                    result = MonkeyResult.ResultStatus.AppNotResponding;
+                    status = MonkeyResult.ResultStatus.AppNotResponding;
                 }
             }
         }
