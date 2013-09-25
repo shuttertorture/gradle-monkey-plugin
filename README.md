@@ -1,4 +1,4 @@
-# gradle-monkey-plugin [![Build Status](https://travis-ci.org/autoscout24/gradle-monkey-plugin.png)](https://travis-ci.org/autoscout24/gradle-monkey-plugin)
+# gradle-monkey-plugin [![Build Status](https://travis-ci.org/AutoScout24/gradle-monkey-plugin.png)](https://travis-ci.org/AutoScout24/gradle-monkey-plugin)
 A Gradle plugin for running Android monkey tests.
 
 ## License
