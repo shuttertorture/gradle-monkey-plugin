@@ -27,6 +27,7 @@ package com.scompt.gradle.monkey
 import com.android.builder.testing.ConnectedDeviceProvider
 import com.android.builder.testing.ConnectedDevice
 import org.gradle.api.GradleException
+import org.gradle.api.tasks.OutputFile
 
 import java.util.concurrent.TimeUnit
 import com.android.ddmlib.CollectingOutputReceiver        
@@ -38,6 +39,9 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class MonkeyTestTask extends DefaultTask {
+
+    @OutputFile
+    File reportFile
 
     String packageName;
 
@@ -62,6 +66,15 @@ class MonkeyTestTask extends DefaultTask {
         if (project.monkey.teamCityLog) {
             println String.format("##teamcity[buildStatus status='%s' text='{build.status.text}, %d/%d events']",
                     result.status.isSuccess ? "SUCCESS" : "FAILURE", result.eventsCompleted, result.totalEventCount)
+        }
+
+        if (reportFile != null) {
+            def reportsDir = reportFile.getParentFile()
+            if (!reportsDir.exists() && !reportsDir.mkdirs()) {
+                throw new GradleException("Could not create reports directory: " + reportsDir.getAbsolutePath())
+            }
+
+            reportFile.write(monkeyOutput, "UTF-8")
         }
 
         if (result.status != MonkeyResult.ResultStatus.Success && project.monkey.failOnFailure) {

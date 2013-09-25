@@ -30,6 +30,7 @@ import org.gradle.api.Project
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.api.ApplicationVariant
+import com.android.builder.BuilderConstants
 
 import org.gradle.api.plugins.JavaBasePlugin
 
@@ -57,6 +58,7 @@ class MonkeyPlugin implements Plugin<Project> {
             task.group = JavaBasePlugin.VERIFICATION_GROUP
             task.description = "Run the ${variant.name} monkey tests on the first connected device"
             task.packageName = getPackageName(variant)
+            task.reportFile = new File(new File(project.buildDir, BuilderConstants.FD_REPORTS), "monkey${variant.name}.txt")
             task.outputs.upToDateWhen { false }
         }
     }
