@@ -1,9 +1,18 @@
+buildscript {
+   repositories {
+      mavenCentral()
+   }
+   dependencies {
+    classpath 'com.github.townsfolk:gradle-release:1.2'
+   }
+}
+
 apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'release'
 
-version = '0.2-SNAPSHOT'
 group = 'com.autoscout24.gradle'
 
 ext.archivesBaseName = 'gradle-monkey-plugin'
@@ -69,6 +78,10 @@ uploadArchives {
     }
 }
 
+release {
+	createReleaseTag.dependsOn uploadArchives
+}
+
 /**
  * Create POM config and return for use by other tasks.
  */
@@ -90,6 +103,11 @@ def getPomConfiguration() {
                 id 'scompt'
                 name 'Edward Dale'
                 email 'scompt@scompt.com'
+            }
+            developer {
+                id 'x2on'
+                name 'Felix Schulze'
+                email 'code@felixschulze.de'
             }
         }
         scm {
