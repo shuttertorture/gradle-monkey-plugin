@@ -3,7 +3,7 @@ apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-version = '0.1-SNAPSHOT'
+version = '0.1'
 group = 'com.autoscout24.gradle'
 
 ext.archivesBaseName = 'gradle-monkey-plugin'
