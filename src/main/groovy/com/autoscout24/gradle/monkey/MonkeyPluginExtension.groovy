@@ -30,6 +30,7 @@ class MonkeyPluginExtension {
     def boolean failOnFailure = false
     def boolean teamCityLog = false
     def int eventCount = 100
+    def boolean install = false
 
     private final Project project
 

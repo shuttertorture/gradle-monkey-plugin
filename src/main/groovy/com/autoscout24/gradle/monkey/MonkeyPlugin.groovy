@@ -53,13 +53,18 @@ class MonkeyPlugin implements Plugin<Project> {
 
         AppExtension android = project.android
         android.applicationVariants.all { ApplicationVariant variant ->
+
             MonkeyTestTask task = project.tasks.create("monkey${variant.name}", MonkeyTestTask)
-            task.dependsOn(variant.install)
             task.group = JavaBasePlugin.VERIFICATION_GROUP
             task.description = "Run the ${variant.name} monkey tests on the first connected device"
             task.packageName = getPackageName(variant)
             task.reportFile = new File(new File(project.buildDir, BuilderConstants.FD_REPORTS), "monkey${variant.name}.txt")
             task.outputs.upToDateWhen { false }
+
+            if (project.monkey.install) {
+                task.dependsOn(variant.assemble)
+                task.apkFile = variant.install.packageFile
+            }
         }
     }
 

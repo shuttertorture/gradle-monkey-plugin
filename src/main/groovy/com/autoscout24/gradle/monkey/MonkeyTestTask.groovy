@@ -27,10 +27,13 @@ package com.autoscout24.gradle.monkey
 import com.android.builder.testing.ConnectedDeviceProvider
 import com.android.builder.testing.ConnectedDevice
 import org.gradle.api.GradleException
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 
 import java.util.concurrent.TimeUnit
-import com.android.ddmlib.CollectingOutputReceiver        
+import com.android.ddmlib.CollectingOutputReceiver
+import com.android.utils.StdLogger
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
@@ -43,6 +46,10 @@ class MonkeyTestTask extends DefaultTask {
     @OutputFile
     File reportFile
 
+    @InputFile
+    @Optional
+    File apkFile
+
     String packageName;
 
     @TaskAction
@@ -51,6 +58,12 @@ class MonkeyTestTask extends DefaultTask {
         cdp.init()
         ConnectedDevice device = cdp.devices[0]
         logger.info("Found device " + device.name)
+
+        if (apkFile != null) {
+            def logger = new StdLogger(StdLogger.Level.VERBOSE)
+            device.uninstallPackage(packageName, 30000, logger)
+            device.installPackage(apkFile, 30000, logger)
+        }
 
         CollectingOutputReceiver receiver = new CollectingOutputReceiver()
         String monkeyCommand = String.format("monkey -p %s -vv %d", packageName, project.monkey.eventCount)

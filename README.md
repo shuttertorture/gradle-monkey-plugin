@@ -27,12 +27,14 @@ monkey {
     teamCityLog = true
     eventCount = 1000
     failOnFailure = false
+    install = true
 }
 ```
 
 * `teamCityLog`: Add features for [TeamCity](http://www.jetbrains.com/teamcity/)
 * `eventCount`: Number of monkey events
 * `failOnFailure`: Deactivate exit code on failure
+* `install`: Reinstalls the APK first
 
 ## License
 
