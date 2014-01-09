@@ -57,7 +57,7 @@ class MonkeyPlugin implements Plugin<Project> {
             MonkeyTestTask task = project.tasks.create("monkey${variant.name}", MonkeyTestTask)
             task.group = JavaBasePlugin.VERIFICATION_GROUP
             task.description = "Run the ${variant.name} monkey tests on the first connected device"
-            task.packageName = getPackageName(variant)
+            task.variantName = variant.name
             task.reportFile = new File(new File(project.buildDir, BuilderConstants.FD_REPORTS), "monkey${variant.name}.txt")
             task.outputs.upToDateWhen { false }
 
@@ -66,16 +66,6 @@ class MonkeyPlugin implements Plugin<Project> {
                 task.apkFile = variant.install.packageFile
             }
         }
-    }
-
-    private String getPackageName(ApplicationVariant variant) {
-        // TODO: There's probably a better way to get the package name of the variant being tested.
-        String packageName = variant.generateBuildConfig.packageName
-
-        if (variant.processManifest.packageNameOverride != null) {
-            packageName = variant.processManifest.packageNameOverride
-        }
-        packageName
     }
 
 
