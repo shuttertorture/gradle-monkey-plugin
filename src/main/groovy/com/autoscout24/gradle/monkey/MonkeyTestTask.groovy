@@ -71,7 +71,7 @@ class MonkeyTestTask extends DefaultTask {
         }
 
         CollectingOutputReceiver receiver = new CollectingOutputReceiver()
-        String monkeyCommand = String.format("monkey -p %s -vv %d", packageName, project.monkey.eventCount)
+        String monkeyCommand = String.format("monkey -p %s -s %d -vv %d ", packageName, project.monkey.seed, project.monkey.eventCount)
         device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
 
         String monkeyOutput = receiver.output
