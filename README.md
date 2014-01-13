@@ -26,6 +26,7 @@ Add to your build.gradle
 monkey {
     teamCityLog = true
     eventCount = 1000
+    seed = 246
     failOnFailure = false
     install = true
 }
@@ -33,6 +34,7 @@ monkey {
 
 * `teamCityLog`: Add features for [TeamCity](http://www.jetbrains.com/teamcity/)
 * `eventCount`: Number of monkey events
+* `seed`: Seed value for pseudo-random number generator
 * `failOnFailure`: Deactivate exit code on failure
 * `install`: Reinstalls the APK first
 
