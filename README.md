@@ -11,7 +11,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-		    classpath group: 'com.autoscout24.gradle', name: 'gradle-monkey-plugin', version: '0.2+'
+		    classpath group: 'com.autoscout24.gradle', name: 'gradle-monkey-plugin', version: '0.4+'
     }
 }
 
