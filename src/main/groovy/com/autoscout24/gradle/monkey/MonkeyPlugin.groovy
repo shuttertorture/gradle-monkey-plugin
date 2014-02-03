@@ -54,11 +54,11 @@ class MonkeyPlugin implements Plugin<Project> {
         AppExtension android = project.android
         android.applicationVariants.all { ApplicationVariant variant ->
 
-            MonkeyTestTask task = project.tasks.create("monkey${variant.name}", MonkeyTestTask)
+            MonkeyTestTask task = project.tasks.create("monkey${variant.name.capitalize()}", MonkeyTestTask)
             task.group = JavaBasePlugin.VERIFICATION_GROUP
-            task.description = "Run the ${variant.name} monkey tests on the first connected device"
+            task.description = "Run the ${variant.name.capitalize()} monkey tests on the first connected device"
             task.variantName = variant.name
-            task.reportFile = new File(new File(project.buildDir, BuilderConstants.FD_REPORTS), "monkey${variant.name}.txt")
+            task.reportFile = new File(new File(project.buildDir, BuilderConstants.FD_REPORTS), "monkey${variant.name.capitalize()}.txt")
             task.outputs.upToDateWhen { false }
 
             if (project.monkey.install) {
