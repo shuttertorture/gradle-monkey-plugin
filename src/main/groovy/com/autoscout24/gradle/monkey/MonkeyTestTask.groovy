@@ -59,7 +59,7 @@ class MonkeyTestTask extends DefaultTask {
         String packageName = getPackageName()
         logger.info("Running tests for package: " + packageName)
         
-        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(project.android.plugin.sdkParser)
+        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(project.android.getAdbExe())
         cdp.init()
         ConnectedDevice device = cdp.devices[0]
         logger.info("Found device " + device.name)
