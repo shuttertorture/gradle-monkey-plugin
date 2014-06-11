@@ -24,14 +24,12 @@
 
 package com.autoscout24.gradle.monkey
 
-import org.gradle.api.Plugin
-import org.gradle.api.Project
-
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.api.ApplicationVariant
-import com.android.builder.BuilderConstants
-
+import com.android.builder.core.BuilderConstants
+import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
 
 class MonkeyPlugin implements Plugin<Project> {

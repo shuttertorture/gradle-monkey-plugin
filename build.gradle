@@ -1,10 +1,10 @@
 buildscript {
-   repositories {
-      mavenCentral()
-   }
-   dependencies {
-    classpath 'com.github.townsfolk:gradle-release:1.2'
-   }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.github.townsfolk:gradle-release:1.2'
+    }
 }
 
 apply plugin: 'groovy'
@@ -25,7 +25,7 @@ repositories {
 dependencies {
     groovy localGroovy()
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:0.10.+'
+    compile 'com.android.tools.build:gradle:0.11.+'
 }
 
 task sourceJar(type: Jar) {
@@ -79,7 +79,7 @@ uploadArchives {
 }
 
 release {
-	createReleaseTag.dependsOn uploadArchives
+    createReleaseTag.dependsOn uploadArchives
 }
 
 /**
