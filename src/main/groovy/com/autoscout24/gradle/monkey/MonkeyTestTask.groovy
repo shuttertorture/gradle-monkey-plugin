@@ -24,22 +24,20 @@
 
 package com.autoscout24.gradle.monkey
 
-import com.android.builder.testing.ConnectedDeviceProvider
+import com.android.builder.core.VariantConfiguration
 import com.android.builder.testing.ConnectedDevice
-import com.android.builder.VariantConfiguration
-
+import com.android.builder.testing.ConnectedDeviceProvider
+import com.android.ddmlib.CollectingOutputReceiver
+import com.android.utils.StdLogger
+import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
+import org.jruby.ext.posix.HeapStruct
 
 import java.util.concurrent.TimeUnit
-import com.android.ddmlib.CollectingOutputReceiver
-import com.android.utils.StdLogger
-
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.TaskAction
-
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -58,7 +56,7 @@ class MonkeyTestTask extends DefaultTask {
     def runMonkeyTest() throws IOException {
         String packageName = getPackageName()
         logger.info("Running tests for package: " + packageName)
-        
+
         ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(project.android.getAdbExe())
         cdp.init()
         ConnectedDevice device = cdp.devices[0]
@@ -126,7 +124,7 @@ class MonkeyTestTask extends DefaultTask {
             // If it didn't finish, assume failure
             matcher = Pattern.compile("Events injected: (\\d+)").matcher(monkeyOutput);
             if (matcher.find()) {
-                eventsCompleted = Integer.parseInt(matcher.group(1));
+                eventsCompleted = HeapStruct.Integer.parseInt(matcher.group(1));
             }
 
             // Determine failure type
@@ -143,14 +141,14 @@ class MonkeyTestTask extends DefaultTask {
 
         return new MonkeyResult(status, totalEventCount, eventsCompleted)
     }
- 
+
     private String getPackageName() {
-        def matchingVariants = project.android.applicationVariants.matching { var -> var.name == variantName}
-        
+        def matchingVariants = project.android.applicationVariants.matching { var -> var.name == variantName }
+
         if (matchingVariants.isEmpty()) {
             throw new GradleException("Could not find the '" + variantName + "' variant")
         }
-        
+
         VariantConfiguration.getManifestPackage(matchingVariants.iterator().next().processManifest.manifestOutputFile)
     }
 }

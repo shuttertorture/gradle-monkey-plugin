@@ -1,6 +1,8 @@
+.idea/
 *.ipr
 *.iml
 *.iws
 .gradle
 example/target
 build
+
