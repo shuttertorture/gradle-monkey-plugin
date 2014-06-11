@@ -35,9 +35,7 @@ import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.jruby.ext.posix.HeapStruct
 
-import java.util.concurrent.TimeUnit
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -124,7 +122,7 @@ class MonkeyTestTask extends DefaultTask {
             // If it didn't finish, assume failure
             matcher = Pattern.compile("Events injected: (\\d+)").matcher(monkeyOutput);
             if (matcher.find()) {
-                eventsCompleted = HeapStruct.Integer.parseInt(matcher.group(1));
+                eventsCompleted = Integer.parseInt(matcher.group(1));
             }
 
             // Determine failure type
