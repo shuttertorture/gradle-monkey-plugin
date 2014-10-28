@@ -23,9 +23,9 @@ repositories {
 }
 
 dependencies {
-    groovy localGroovy()
+    compile localGroovy()
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:0.11.+'
+    compile 'com.android.tools.build:gradle:0.13.+'
 }
 
 task sourceJar(type: Jar) {
@@ -55,6 +55,9 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.1'
+}
 
 install.repositories.mavenInstaller {
     pom.project(pomConfiguration)

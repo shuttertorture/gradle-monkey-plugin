@@ -61,7 +61,10 @@ class MonkeyPlugin implements Plugin<Project> {
 
             if (project.monkey.install) {
                 task.dependsOn(variant.assemble)
-                task.apkFile = variant.install.packageFile
+                if (!variant.getOutputs().isEmpty()) {
+                    task.apkFile = variant.getOutputs().get(0).getOutputFile()
+                }
+
             }
         }
     }
