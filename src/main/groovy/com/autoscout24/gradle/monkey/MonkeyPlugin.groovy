@@ -35,16 +35,15 @@ import org.gradle.api.plugins.JavaBasePlugin
 class MonkeyPlugin implements Plugin<Project> {
 
     void apply(Project project) {
-        configureDependencies(project)
         applyExtensions(project)
         applyTasks(project)
     }
 
-    void applyExtensions(final Project project) {
+    static void applyExtensions(final Project project) {
         project.extensions.create('monkey', MonkeyPluginExtension, project)
     }
 
-    void applyTasks(final Project project) {
+    static void applyTasks(final Project project) {
         if (!project.plugins.hasPlugin(AppPlugin)) {
             throw new IllegalStateException("gradle-android-plugin not found")
         }
@@ -66,13 +65,6 @@ class MonkeyPlugin implements Plugin<Project> {
                 }
 
             }
-        }
-    }
-
-
-    void configureDependencies(final Project project) {
-        project.repositories {
-            mavenCentral()
         }
     }
 

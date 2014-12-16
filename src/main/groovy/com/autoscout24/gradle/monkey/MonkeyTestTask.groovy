@@ -24,6 +24,8 @@
 
 package com.autoscout24.gradle.monkey
 
+import com.android.build.gradle.AppExtension
+import com.android.build.gradle.api.ApplicationVariant
 import com.android.builder.core.VariantConfiguration
 import com.android.builder.testing.ConnectedDevice
 import com.android.builder.testing.ConnectedDeviceProvider
@@ -51,12 +53,19 @@ class MonkeyTestTask extends DefaultTask {
 
     String variantName;
 
+    AppExtension android
+    MonkeyPluginExtension monkey
+
     @TaskAction
     def runMonkeyTest() throws IOException {
+
+        android = project.android
+        monkey = project.monkey
+
         String packageName = getPackageName()
         logger.info("Running tests for package: " + packageName)
 
-        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(project.android.getAdbExe())
+        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(android.getAdbExe())
         cdp.init()
         ConnectedDevice device = cdp.devices[0]
         logger.info("Found device " + device.name)
@@ -68,7 +77,7 @@ class MonkeyTestTask extends DefaultTask {
         }
 
         CollectingOutputReceiver receiver = new CollectingOutputReceiver()
-        String monkeyCommand = String.format("monkey -p %s -s %d -vv %d ", packageName, project.monkey.seed, project.monkey.eventCount)
+        String monkeyCommand = String.format("monkey -p %s -s %d -vv %d ", packageName, monkey.seed, monkey.eventCount)
         device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
 
         String monkeyOutput = receiver.output
@@ -78,7 +87,7 @@ class MonkeyTestTask extends DefaultTask {
             println monkeyOutput
         }
 
-        if (project.monkey.teamCityLog) {
+        if (monkey.teamCityLog) {
             println String.format("##teamcity[buildStatus status='%s' text='{build.status.text}, %d/%d events']",
                     result.status.isSuccess ? "SUCCESS" : "FAILURE", result.eventsCompleted, result.totalEventCount)
         }
@@ -92,7 +101,7 @@ class MonkeyTestTask extends DefaultTask {
             reportFile.write(monkeyOutput, "UTF-8")
         }
 
-        if (result.status != MonkeyResult.ResultStatus.Success && project.monkey.failOnFailure) {
+        if (result.status != MonkeyResult.ResultStatus.Success && monkey.failOnFailure) {
             System.exit(1)
         }
     }
@@ -142,12 +151,14 @@ class MonkeyTestTask extends DefaultTask {
     }
 
     private String getPackageName() {
-        def matchingVariants = project.android.applicationVariants.matching { var -> var.name == variantName }
+        def matchingVariants = android.applicationVariants.matching { var -> var.name == variantName }
 
         if (matchingVariants.isEmpty()) {
             throw new GradleException("Could not find the '" + variantName + "' variant")
         }
 
-        VariantConfiguration.getManifestPackage(matchingVariants.iterator().next().processManifest.manifestOutputFile)
+        ApplicationVariant variant = matchingVariants.iterator().next()
+
+        VariantConfiguration.getManifestPackage(variant.getOutputs()[0].getProcessManifest().manifestOutputFile)
     }
 }

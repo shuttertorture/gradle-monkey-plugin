@@ -25,7 +25,7 @@ repositories {
 dependencies {
     compile localGroovy()
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:0.13.+'
+    compile 'com.android.tools.build:gradle:1.0.0'
 }
 
 task sourceJar(type: Jar) {
@@ -53,10 +53,6 @@ gradle.taskGraph.whenReady { taskGraph ->
     tasks.withType(org.gradle.plugins.signing.Sign).all {
         required = taskGraph.hasTask(":uploadArchives") && !isSnapshot
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.1'
 }
 
 install.repositories.mavenInstaller {
