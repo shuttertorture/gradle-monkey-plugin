@@ -27,6 +27,7 @@ monkey {
     teamCityLog = true
     eventCount = 1000
     seed = 246
+    delay = 100
     failOnFailure = false
     install = true
 }
