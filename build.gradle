@@ -26,6 +26,7 @@ dependencies {
     compile localGroovy()
     compile gradleApi()
     compile 'com.android.tools.build:gradle:1.0.0'
+    compile 'de.felixschulze.teamcity:teamcity-status-message-helper:1.0.2'
 }
 
 task sourceJar(type: Jar) {
@@ -56,11 +57,12 @@ gradle.taskGraph.whenReady { taskGraph ->
 }
 
 install.repositories.mavenInstaller {
-    pom.project(pomConfiguration)
     if (signing.signatory) {
-        beforeDeployment { signing.signPom(it) }
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
     }
+    pom.project(pomConfiguration)
 }
+
 
 uploadArchives {
     repositories.mavenDeployer {
@@ -98,11 +100,6 @@ def getPomConfiguration() {
             }
         }
         developers {
-            developer {
-                id 'scompt'
-                name 'Edward Dale'
-                email 'scompt@scompt.com'
-            }
             developer {
                 id 'x2on'
                 name 'Felix Schulze'

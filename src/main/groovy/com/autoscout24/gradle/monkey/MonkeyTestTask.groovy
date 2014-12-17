@@ -31,6 +31,9 @@ import com.android.builder.testing.ConnectedDevice
 import com.android.builder.testing.ConnectedDeviceProvider
 import com.android.ddmlib.CollectingOutputReceiver
 import com.android.utils.StdLogger
+import de.felixschulze.teamcity.TeamCityProgressType
+import de.felixschulze.teamcity.TeamCityStatusMessageHelper
+import de.felixschulze.teamcity.TeamCityStatusType
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.InputFile
@@ -71,13 +74,34 @@ class MonkeyTestTask extends DefaultTask {
         logger.info("Found device " + device.name)
 
         if (apkFile != null) {
+            logger.info("Uninstall APK...")
+            if (monkey.teamCityLog) {
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Install APK")
+            }
+
             def logger = new StdLogger(StdLogger.Level.VERBOSE)
             device.uninstallPackage(packageName, 30000, logger)
+            logger.info("Install APK...")
             device.installPackage(apkFile, 30000, logger)
+
+            if (monkey.teamCityLog) {
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Install APK")
+            }
         }
 
         CollectingOutputReceiver receiver = new CollectingOutputReceiver()
-        String monkeyCommand = String.format("monkey -p %s -s %d -vv %d ", packageName, monkey.seed, monkey.eventCount)
+        String monkeyCommand = "monkey"
+        if (monkey.delay > 0) {
+            monkeyCommand += String.format(" --throttle %d", monkey.delay)
+        }
+        monkeyCommand += String.format(" -p %s -s %d -vv %d ", packageName, monkey.seed, monkey.eventCount)
+
+        logger.info("Monkey command: " + monkeyCommand)
+
+        if (monkey.teamCityLog) {
+            println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey")
+        }
+
         device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
 
         String monkeyOutput = receiver.output
@@ -88,8 +112,11 @@ class MonkeyTestTask extends DefaultTask {
         }
 
         if (monkey.teamCityLog) {
-            println String.format("##teamcity[buildStatus status='%s' text='{build.status.text}, %d/%d events']",
-                    result.status.isSuccess ? "SUCCESS" : "FAILURE", result.eventsCompleted, result.totalEventCount)
+            println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Run Monkey")
+        }
+
+        if (monkey.teamCityLog) {
+            println TeamCityStatusMessageHelper.buildStatusString(result.status.isSuccess ? TeamCityStatusType.NORMAL : TeamCityStatusType.FAILURE, String.format('%s, %d/%d events', result.status.isSuccess ? "Success" : "Failure", result.eventsCompleted, result.totalEventCount))
         }
 
         if (reportFile != null) {

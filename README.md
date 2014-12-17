@@ -11,11 +11,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-		    classpath group: 'com.autoscout24.gradle', name: 'gradle-monkey-plugin', version: '0.8+'
+		    classpath group: 'com.autoscout24.gradle', name: 'gradle-monkey-plugin', version: '1.1'
     }
 }
 
-apply plugin: 'monkey'
+apply plugin: 'com.autoscout24.gradle.monkey'
 ```
 
 ## Advanced usage
@@ -35,6 +35,7 @@ monkey {
 * `teamCityLog`: Add features for [TeamCity](http://www.jetbrains.com/teamcity/)
 * `eventCount`: Number of monkey events
 * `seed`: Seed value for pseudo-random number generator
+* `delay`: Delay between events in milliseconds
 * `failOnFailure`: Deactivate exit code on failure
 * `install`: Reinstalls the APK first
 
