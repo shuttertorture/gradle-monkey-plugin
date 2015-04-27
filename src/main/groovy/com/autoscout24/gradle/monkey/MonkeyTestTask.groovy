@@ -70,7 +70,7 @@ class MonkeyTestTask extends DefaultTask {
 
         ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(android.getAdbExe())
         cdp.init()
-        ConnectedDevice device = cdp.devices[0]
+        ConnectedDevice device = cdp.devices[0] as ConnectedDevice
         logger.info("Found device " + device.name)
 
         if (apkFile != null) {
@@ -82,7 +82,7 @@ class MonkeyTestTask extends DefaultTask {
             def logger = new StdLogger(StdLogger.Level.VERBOSE)
             device.uninstallPackage(packageName, 30000, logger)
             logger.info("Install APK...")
-            device.installPackage(apkFile, 30000, logger)
+            device.installPackage(apkFile, new ArrayList<String>(), 30000, logger)
 
             if (monkey.teamCityLog) {
                 println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Install APK")
