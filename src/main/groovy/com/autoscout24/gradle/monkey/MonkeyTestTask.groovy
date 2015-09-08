@@ -24,6 +24,7 @@
 
 package com.autoscout24.gradle.monkey
 
+import com.android.annotations.NonNull
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.api.ApplicationVariant
 import com.android.builder.core.VariantConfiguration
@@ -54,10 +55,12 @@ class MonkeyTestTask extends DefaultTask {
     @Optional
     File apkFile
 
-    String variantName;
+    String variantName
 
     AppExtension android
     MonkeyPluginExtension monkey
+
+    StdLogger stdLogger
 
     @TaskAction
     def runMonkeyTest() throws IOException {
@@ -68,67 +71,70 @@ class MonkeyTestTask extends DefaultTask {
         String packageName = getPackageName()
         logger.info("Running tests for package: " + packageName)
 
-        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(android.getAdbExe())
+        stdLogger = new StdLogger(StdLogger.Level.VERBOSE)
+
+
+        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(android.getAdbExe(), stdLogger)
         cdp.init()
-        ConnectedDevice device = cdp.devices[0] as ConnectedDevice
-        logger.info("Found device " + device.name)
 
-        if (apkFile != null) {
-            logger.info("Uninstall APK...")
+        ArrayList<MonkeyResult> results = new ArrayList<>()
+
+        cdp.devices.each {
+            ConnectedDevice device = it as ConnectedDevice
+            logger.info("Found device: " + device.name)
+            uninstallApkFromDevice(device, packageName)
+
+            CollectingOutputReceiver receiver = new CollectingOutputReceiver()
+            String monkeyCommand = "monkey"
+            if (monkey.delay > 0) {
+                monkeyCommand += String.format(" --throttle %d", monkey.delay)
+            }
+            monkeyCommand += String.format(" -p %s -s %d -vv %d ", packageName, monkey.seed, monkey.eventCount)
+
+            logger.info("Monkey command: " + monkeyCommand)
             if (monkey.teamCityLog) {
-                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Install APK")
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey (" + device.name + ")")
             }
 
-            def logger = new StdLogger(StdLogger.Level.VERBOSE)
-            device.uninstallPackage(packageName, 30000, logger)
-            logger.info("Install APK...")
-            device.installPackage(apkFile, new ArrayList<String>(), 30000, logger)
+            device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
+            String monkeyOutput = receiver.output
+            MonkeyResult result = parseMonkeyOutput(monkeyOutput)
+            results.add(result)
+
+            if (logger.isDebugEnabled()) {
+                println monkeyOutput
+            }
 
             if (monkey.teamCityLog) {
-                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Install APK")
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Run Monkey (" + device.name + ")")
+            }
+
+            if (reportFile != null) {
+                def reportsDir = reportFile.getParentFile()
+                if (!reportsDir.exists() && !reportsDir.mkdirs()) {
+                    throw new GradleException("Could not create reports directory: " + reportsDir.getAbsolutePath())
+                }
+
+                reportFile.write(monkeyOutput, "UTF-8")
             }
         }
 
-        CollectingOutputReceiver receiver = new CollectingOutputReceiver()
-        String monkeyCommand = "monkey"
-        if (monkey.delay > 0) {
-            monkeyCommand += String.format(" --throttle %d", monkey.delay)
-        }
-        monkeyCommand += String.format(" -p %s -s %d -vv %d ", packageName, monkey.seed, monkey.eventCount)
-
-        logger.info("Monkey command: " + monkeyCommand)
-
-        if (monkey.teamCityLog) {
-            println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey")
-        }
-
-        device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
-
-        String monkeyOutput = receiver.output
-        MonkeyResult result = parseMonkeyOutput(monkeyOutput)
-
-        if (logger.isDebugEnabled()) {
-            println monkeyOutput
-        }
-
-        if (monkey.teamCityLog) {
-            println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Run Monkey")
-        }
-
-        if (monkey.teamCityLog) {
-            println TeamCityStatusMessageHelper.buildStatusString(result.status.isSuccess ? TeamCityStatusType.NORMAL : TeamCityStatusType.FAILURE, String.format('%s, %d/%d events', result.status.isSuccess ? "Success" : "Failure", result.eventsCompleted, result.totalEventCount))
-        }
-
-        if (reportFile != null) {
-            def reportsDir = reportFile.getParentFile()
-            if (!reportsDir.exists() && !reportsDir.mkdirs()) {
-                throw new GradleException("Could not create reports directory: " + reportsDir.getAbsolutePath())
+        Boolean success = true
+        int eventsCompleted = 0
+        int totalEventCount = 0
+        results.each {
+            if (!it.status.isSuccess) {
+                success = false
             }
-
-            reportFile.write(monkeyOutput, "UTF-8")
+            eventsCompleted += it.eventsCompleted
+            totalEventCount += it.totalEventCount
         }
 
-        if (result.status != MonkeyResult.ResultStatus.Success && monkey.failOnFailure) {
+        if (monkey.teamCityLog) {
+            println TeamCityStatusMessageHelper.buildStatusString(success ? TeamCityStatusType.NORMAL : TeamCityStatusType.FAILURE, String.format('%s, %d/%d events', success ? "Success" : "Failure", eventsCompleted, totalEventCount))
+        }
+
+        if (!success && monkey.failOnFailure) {
             System.exit(1)
         }
     }
@@ -175,6 +181,23 @@ class MonkeyTestTask extends DefaultTask {
         }
 
         return new MonkeyResult(status, totalEventCount, eventsCompleted)
+    }
+
+    def uninstallApkFromDevice(@NonNull ConnectedDevice device, @NonNull String packageName) {
+        if (apkFile != null) {
+            logger.info("Uninstall APK (" + device.name + ")")
+            if (monkey.teamCityLog) {
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Install APK (" + device.name + ")")
+            }
+
+            device.uninstallPackage(packageName, 30000, stdLogger)
+            logger.info("Install APK (" + device.name + ")")
+            device.installPackage(apkFile, new ArrayList<String>(), 30000, stdLogger)
+
+            if (monkey.teamCityLog) {
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Install APK (" + device.name + ")")
+            }
+        }
     }
 
     private String getPackageName() {
