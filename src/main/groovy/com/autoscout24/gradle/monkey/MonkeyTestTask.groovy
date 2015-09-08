@@ -130,6 +130,10 @@ class MonkeyTestTask extends DefaultTask {
             totalEventCount += it.totalEventCount
         }
 
+        if (results.size() == 0) {
+            success = false
+        }
+
         if (monkey.teamCityLog) {
             println TeamCityStatusMessageHelper.buildStatusString(success ? TeamCityStatusType.NORMAL : TeamCityStatusType.FAILURE, String.format('%s, %d/%d events', success ? "Success" : "Failure", eventsCompleted, totalEventCount))
         }
