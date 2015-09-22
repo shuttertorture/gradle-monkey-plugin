@@ -1,4 +1,4 @@
-# gradle-monkey-plugin [![Build Status](https://travis-ci.org/AutoScout24/gradle-monkey-plugin.png)](https://travis-ci.org/AutoScout24/gradle-monkey-plugin) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.autoscout24.gradle/gradle-monkey-plugin/badge.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.autoscout24.gradle%22%20AND%20a%3A%22gradle-monkey-plugin%22) [![License MIT](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/AutoScout24/gradle-monkey-plugin/blob/master/LICENSE)
+# gradle-monkey-plugin [![Build Status](https://travis-ci.org/AutoScout24/gradle-monkey-plugin.png)](https://travis-ci.org/AutoScout24/gradle-monkey-plugin) [![Maven Central](https://img.shields.io/maven-central/v/com.autoscout24.gradle/gradle-monkey-plugin.svg)](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.autoscout24.gradle%22%20AND%20a%3A%22gradle-monkey-plugin%22) [![License MIT](http://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/AutoScout24/gradle-monkey-plugin/blob/master/LICENSE)
 A Gradle plugin for running Android monkey tests.
 
 ## Basic usage
@@ -11,7 +11,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-		    classpath group: 'com.autoscout24.gradle', name: 'gradle-monkey-plugin', version: '1.1'
+		    classpath group: 'com.autoscout24.gradle', name: 'gradle-monkey-plugin', version: '2.1.1'
     }
 }
 
