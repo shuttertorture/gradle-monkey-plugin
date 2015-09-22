@@ -27,6 +27,7 @@ package com.autoscout24.gradle.monkey
 import com.android.annotations.NonNull
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.api.ApplicationVariant
+import com.android.builder.core.BuilderConstants
 import com.android.builder.core.VariantConfiguration
 import com.android.builder.testing.ConnectedDevice
 import com.android.builder.testing.ConnectedDeviceProvider
@@ -39,17 +40,18 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class MonkeyTestTask extends DefaultTask {
 
-    @OutputFile
-    File reportFile
+    File reportFileDirectory
 
     @InputFile
     @Optional
@@ -79,8 +81,7 @@ class MonkeyTestTask extends DefaultTask {
 
         ArrayList<MonkeyResult> results = new ArrayList<>()
 
-        cdp.devices.each {
-            ConnectedDevice device = it as ConnectedDevice
+        def runTestOnDeviceClosure = { device ->
             logger.info("Found device: " + device.name)
             uninstallApkFromDevice(device, packageName)
 
@@ -109,14 +110,26 @@ class MonkeyTestTask extends DefaultTask {
                 println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Run Monkey (" + device.name + ")")
             }
 
-            if (reportFile != null) {
-                def reportsDir = reportFile.getParentFile()
-                if (!reportsDir.exists() && !reportsDir.mkdirs()) {
-                    throw new GradleException("Could not create reports directory: " + reportsDir.getAbsolutePath())
-                }
-
-                reportFile.write(monkeyOutput, "UTF-8")
+            File reportFile = new File(reportFileDirectory, "monkey${variantName.capitalize()}-${device.name.replaceAll("\\s","_")}-${device.serialNumber}.txt")
+            def reportsDir = reportFile.getParentFile()
+            if (!reportsDir.exists() && !reportsDir.mkdirs()) {
+                throw new GradleException("Could not create reports directory: " + reportsDir.getAbsolutePath())
             }
+            reportFile.write(monkeyOutput, "UTF-8")
+        }
+
+        def threadPool = Executors.newFixedThreadPool(cdp.devices.size())
+
+        try {
+            List<Future> futures = cdp.devices.collect { device ->
+                threadPool.submit({ ->
+                    ConnectedDevice runningDevice = device as ConnectedDevice
+                    runTestOnDeviceClosure runningDevice
+                } as Callable);
+            }
+            futures.each { it.get() }
+        } finally {
+            threadPool.shutdown()
         }
 
         Boolean success = true
