@@ -81,9 +81,13 @@ class MonkeyTestTask extends DefaultTask {
 
         ArrayList<MonkeyResult> results = new ArrayList<>()
 
-        def runTestOnDeviceClosure = { device ->
+        cdp.devices.each {
+            ConnectedDevice device = it as ConnectedDevice
             logger.info("Found device: " + device.name)
             uninstallApkFromDevice(device, packageName)
+        }
+
+        def runTestOnDeviceClosure = { device ->
 
             CollectingOutputReceiver receiver = new CollectingOutputReceiver()
             String monkeyCommand = "monkey"
