@@ -43,6 +43,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -98,7 +99,7 @@ class MonkeyTestTask extends DefaultTask {
 
             logger.info("Monkey command: " + monkeyCommand)
             if (monkey.teamCityLog) {
-                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey (" + device.name + ")")
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey (" + device.name + ")", device.serialNumber)
             }
 
             device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
@@ -111,7 +112,7 @@ class MonkeyTestTask extends DefaultTask {
             }
 
             if (monkey.teamCityLog) {
-                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Run Monkey (" + device.name + ")")
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Run Monkey (" + device.name + ")", device.serialNumber)
             }
 
             File reportFile = new File(reportFileDirectory, "monkey${variantName.capitalize()}-${device.name.replaceAll("\\s","_")}-${device.serialNumber}.txt")
@@ -131,7 +132,14 @@ class MonkeyTestTask extends DefaultTask {
                     runTestOnDeviceClosure runningDevice
                 } as Callable);
             }
-            futures.each { it.get() }
+            futures.each {
+                try {
+                    it.get()
+                }
+                catch (ExecutionException e) {
+                    throw new GradleException("Error while running tests: " + e.toString())
+                }
+            }
         } finally {
             threadPool.shutdown()
         }
@@ -218,6 +226,9 @@ class MonkeyTestTask extends DefaultTask {
             if (monkey.teamCityLog) {
                 println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Install APK (" + device.name + ")")
             }
+
+            logger.info("Uninstall/Install APK (" + device.name + ") done.")
+
         }
     }
 
