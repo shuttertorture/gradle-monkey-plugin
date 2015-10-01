@@ -98,9 +98,6 @@ class MonkeyTestTask extends DefaultTask {
             monkeyCommand += String.format(" -p %s -s %d -vv %d ", packageName, monkey.seed, monkey.eventCount)
 
             logger.info("Monkey command: " + monkeyCommand)
-            if (monkey.teamCityLog) {
-                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey (" + device.name + ")", device.serialNumber)
-            }
 
             device.executeShellCommand(monkeyCommand, receiver, monkey.timeOut, TimeUnit.SECONDS)
             String monkeyOutput = receiver.output
@@ -109,10 +106,6 @@ class MonkeyTestTask extends DefaultTask {
 
             if (logger.isDebugEnabled()) {
                 println monkeyOutput
-            }
-
-            if (monkey.teamCityLog) {
-                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Run Monkey (" + device.name + ")", device.serialNumber)
             }
 
             File reportFile = new File(reportFileDirectory, "monkey${variantName.capitalize()}-${device.name.replaceAll("\\s","_")}-${device.serialNumber}.txt")
@@ -126,6 +119,9 @@ class MonkeyTestTask extends DefaultTask {
         def threadPool = Executors.newFixedThreadPool(cdp.devices.size())
 
         try {
+            if (monkey.teamCityLog) {
+                println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey")
+            }
             List<Future> futures = cdp.devices.collect { device ->
                 threadPool.submit({ ->
                     ConnectedDevice runningDevice = device as ConnectedDevice
@@ -144,6 +140,10 @@ class MonkeyTestTask extends DefaultTask {
             }
         } finally {
             threadPool.shutdown()
+        }
+
+        if (monkey.teamCityLog) {
+            println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.FINISH, "Run Monkey")
         }
 
         Boolean success = true
