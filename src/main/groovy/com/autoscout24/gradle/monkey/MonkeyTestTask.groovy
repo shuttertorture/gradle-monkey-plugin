@@ -102,7 +102,7 @@ class MonkeyTestTask extends DefaultTask {
                 println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey (" + device.name + ")", device.serialNumber)
             }
 
-            device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
+            device.executeShellCommand(monkeyCommand, receiver, monkey.timeOut, TimeUnit.SECONDS)
             String monkeyOutput = receiver.output
             MonkeyResult result = parseMonkeyOutput(monkeyOutput)
             results.add(result)
@@ -137,7 +137,9 @@ class MonkeyTestTask extends DefaultTask {
                     it.get()
                 }
                 catch (ExecutionException e) {
-                    throw new GradleException("Error while running tests: " + e.toString())
+                    logger.error("Error while running tests: " + e.toString())
+                    MonkeyResult result = new MonkeyResult(MonkeyResult.ResultStatus.Crash, monkey.eventCount, 0)
+                    results.add(result)
                 }
             }
         } finally {

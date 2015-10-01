@@ -32,6 +32,7 @@ class MonkeyPluginExtension {
     def int eventCount = 100
     def int delay = 0
     def int seed = 0
+    def int timeOut = 60
     def boolean install = false
 
     private final Project project

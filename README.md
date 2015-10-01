@@ -30,6 +30,7 @@ monkey {
     delay = 100
     failOnFailure = false
     install = true
+    timeOut = 30
 }
 ```
 
@@ -39,6 +40,7 @@ monkey {
 * `delay`: Delay between events in milliseconds
 * `failOnFailure`: Deactivate exit code on failure
 * `install`: Reinstalls the APK first
+* `timeout`: Timeout for OutputResponse
 
 ## License
 
