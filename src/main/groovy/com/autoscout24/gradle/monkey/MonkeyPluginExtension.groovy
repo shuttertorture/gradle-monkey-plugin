@@ -34,6 +34,7 @@ class MonkeyPluginExtension {
     def int seed = 0
     def int timeOut = 60
     def boolean install = false
+    def Collection<String> excludedDevices = new ArrayList<String>()
 
     private final Project project
 

@@ -33,6 +33,7 @@ import com.android.builder.testing.ConnectedDevice
 import com.android.builder.testing.ConnectedDeviceProvider
 import com.android.ddmlib.CollectingOutputReceiver
 import com.android.utils.StdLogger
+import com.google.common.collect.Lists
 import de.felixschulze.teamcity.TeamCityProgressType
 import de.felixschulze.teamcity.TeamCityStatusMessageHelper
 import de.felixschulze.teamcity.TeamCityStatusType
@@ -80,12 +81,25 @@ class MonkeyTestTask extends DefaultTask {
         ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(android.getAdbExe(), stdLogger)
         cdp.init()
 
+        Collection<String> excludedDevices = project.monkey.excludedDevices
+
         ArrayList<MonkeyResult> results = new ArrayList<>()
+        List<ConnectedDevice> devices = Lists.newArrayList()
 
         cdp.devices.each {
             ConnectedDevice device = it as ConnectedDevice
-            logger.info("Found device: " + device.name)
-            uninstallApkFromDevice(device, packageName)
+            if (!excludedDevices.contains(device.getSerialNumber())) {
+                logger.info("Use device: " + device.name)
+                uninstallApkFromDevice(device, packageName)
+                devices.add(device)
+            }
+            else {
+                logger.info("Skip device: " + device.name)
+            }
+        }
+
+        if (devices.empty) {
+            throw new GradleException("No devices found")
         }
 
         def runTestOnDeviceClosure = { device ->
@@ -116,13 +130,13 @@ class MonkeyTestTask extends DefaultTask {
             reportFile.write(monkeyOutput, "UTF-8")
         }
 
-        def threadPool = Executors.newFixedThreadPool(cdp.devices.size())
+        def threadPool = Executors.newFixedThreadPool(devices.size())
 
         try {
             if (monkey.teamCityLog) {
                 println TeamCityStatusMessageHelper.buildProgressString(TeamCityProgressType.START, "Run Monkey")
             }
-            List<Future> futures = cdp.devices.collect { device ->
+            List<Future> futures = devices.collect { device ->
                 threadPool.submit({ ->
                     ConnectedDevice runningDevice = device as ConnectedDevice
                     runTestOnDeviceClosure runningDevice

@@ -11,7 +11,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-		    classpath group: 'com.autoscout24.gradle', name: 'gradle-monkey-plugin', version: '2.1.1'
+		    classpath group: 'com.autoscout24.gradle', name: 'gradle-monkey-plugin', version: '2.3'
     }
 }
 
@@ -31,6 +31,7 @@ monkey {
     failOnFailure = false
     install = true
     timeOut = 30
+    excludedDevices = ['f5adb1a1', 'a6asb224']
 }
 ```
 
@@ -41,6 +42,7 @@ monkey {
 * `failOnFailure`: Deactivate exit code on failure
 * `install`: Reinstalls the APK first
 * `timeout`: Timeout for OutputResponse
+* `excludedDevices`: List of devices which should be excluded
 
 ## License
 
