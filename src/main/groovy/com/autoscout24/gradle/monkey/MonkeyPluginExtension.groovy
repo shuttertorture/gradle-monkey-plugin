@@ -27,15 +27,19 @@ package com.autoscout24.gradle.monkey
 import org.gradle.api.Project
 
 class MonkeyPluginExtension {
-    def boolean failOnFailure = false
-    def boolean teamCityLog = false
-    def int eventCount = 100
-    def int seed = 0
-    def boolean install = false
+    boolean failOnFailure = false
+    boolean teamCityLog = false
+    int eventCount = 100
+    int seed = 0
+    boolean install = false
+    int uninstallTimeoutMs = 20000
+    int installTimeoutMs = 20000
+    int connectTimeoutMs = 20000
+    int logLevel = 3
 
     private final Project project
 
-    public MonkeyPluginExtension(Project project) {
+    MonkeyPluginExtension(Project project) {
         this.project = project
     }
 }

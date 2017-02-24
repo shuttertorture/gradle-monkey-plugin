@@ -24,22 +24,20 @@
 
 package com.autoscout24.gradle.monkey
 
-import com.android.builder.testing.ConnectedDeviceProvider
+import com.android.build.gradle.AppExtension
 import com.android.builder.testing.ConnectedDevice
-import com.android.builder.VariantConfiguration
-
+import com.android.builder.testing.ConnectedDeviceProvider
+import com.android.ddmlib.CollectingOutputReceiver
+import com.android.utils.StdLogger
+import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
+import com.android.utils.StdLogger.Level
 
 import java.util.concurrent.TimeUnit
-import com.android.ddmlib.CollectingOutputReceiver
-import com.android.utils.StdLogger
-
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.TaskAction
-
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -56,22 +54,30 @@ class MonkeyTestTask extends DefaultTask {
 
     @TaskAction
     def runMonkeyTest() throws IOException {
+        MonkeyPluginExtension extensionProperties = project.getExtensions().getByType(MonkeyPluginExtension)
+        StdLogger androidLogger = new StdLogger(Level.values()[extensionProperties.logLevel])
         String packageName = getPackageName()
+        if (logger.isDebugEnabled()) {
+            println "Monkey task settings from build.gradle ->"
+            println "Event count: " + extensionProperties.eventCount
+            println "Install timeout: " + extensionProperties.installTimeoutMs + " ms"
+            println "Unnstall timeout: " + extensionProperties.uninstallTimeoutMs + " ms"
+            println "Seed: " + extensionProperties.seed
+        }
         logger.info("Running tests for package: " + packageName)
-        
-        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(project.android.getAdbExe())
+
+        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(project.getExtensions().getByType(AppExtension).getAdbExecutable(), extensionProperties.connectTimeoutMs, androidLogger)
         cdp.init()
         ConnectedDevice device = cdp.devices[0]
         logger.info("Found device " + device.name)
 
         if (apkFile != null) {
-            def logger = new StdLogger(StdLogger.Level.VERBOSE)
-            device.uninstallPackage(packageName, 30000, logger)
-            device.installPackage(apkFile, 30000, logger)
+            device.uninstallPackage(packageName, extensionProperties.uninstallTimeoutMs, androidLogger)
+            device.installPackage(apkFile, new ArrayList(), extensionProperties.installTimeoutMs, androidLogger)
         }
 
         CollectingOutputReceiver receiver = new CollectingOutputReceiver()
-        String monkeyCommand = String.format("monkey -p %s -s %d -vv %d ", packageName, project.monkey.seed, project.monkey.eventCount)
+        String monkeyCommand = String.format("monkey -p %s -s %d -vv %d ", packageName, extensionProperties.seed, extensionProperties.eventCount)
         device.executeShellCommand(monkeyCommand, receiver, 30, TimeUnit.SECONDS)
 
         String monkeyOutput = receiver.output
@@ -81,7 +87,7 @@ class MonkeyTestTask extends DefaultTask {
             println monkeyOutput
         }
 
-        if (project.monkey.teamCityLog) {
+        if (project.getExtensions().getByType(MonkeyPluginExtension).teamCityLog) {
             println String.format("##teamcity[buildStatus status='%s' text='{build.status.text}, %d/%d events']",
                     result.status.isSuccess ? "SUCCESS" : "FAILURE", result.eventsCompleted, result.totalEventCount)
         }
@@ -95,7 +101,7 @@ class MonkeyTestTask extends DefaultTask {
             reportFile.write(monkeyOutput, "UTF-8")
         }
 
-        if (result.status != MonkeyResult.ResultStatus.Success && project.monkey.failOnFailure) {
+        if (result.status != MonkeyResult.ResultStatus.Success && project.getExtensions().getByType(MonkeyPluginExtension).failOnFailure) {
             System.exit(1)
         }
     }
@@ -133,9 +139,9 @@ class MonkeyTestTask extends DefaultTask {
             matcher = Pattern.compile("// (CRASH|NOT RESPONDING)").matcher(monkeyOutput);
             if (matcher.find()) {
                 String reason = matcher.group(1);
-                if ("CRASH".equals(reason)) {
+                if ("CRASH" == reason) {
                     status = MonkeyResult.ResultStatus.Crash;
-                } else if ("NOT RESPONDING".equals(reason)) {
+                } else if ("NOT RESPONDING" == reason) {
                     status = MonkeyResult.ResultStatus.AppNotResponding;
                 }
             }
@@ -143,14 +149,15 @@ class MonkeyTestTask extends DefaultTask {
 
         return new MonkeyResult(status, totalEventCount, eventsCompleted)
     }
- 
+
     private String getPackageName() {
-        def matchingVariants = project.android.applicationVariants.matching { var -> var.name == variantName}
-        
+        def matchingVariants = project.getExtensions().getByType(AppExtension).applicationVariants.matching { var -> var.name == variantName }
+
         if (matchingVariants.isEmpty()) {
             throw new GradleException("Could not find the '" + variantName + "' variant")
         }
-        
-        VariantConfiguration.getManifestPackage(matchingVariants.iterator().next().processManifest.manifestOutputFile)
+        return matchingVariants.first().getGenerateBuildConfig().getBuildConfigPackageName() + "." + matchingVariants.first().getBuildType().getName()
+
+
     }
 }

@@ -24,14 +24,12 @@
 
 package com.autoscout24.gradle.monkey
 
-import org.gradle.api.Plugin
-import org.gradle.api.Project
-
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.api.ApplicationVariant
-import com.android.builder.BuilderConstants
-
+import com.android.builder.core.BuilderConstants
+import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
 
 class MonkeyPlugin implements Plugin<Project> {
@@ -51,7 +49,7 @@ class MonkeyPlugin implements Plugin<Project> {
             throw new IllegalStateException("gradle-android-plugin not found")
         }
 
-        AppExtension android = project.android
+        AppExtension android = project.extensions.getByType(AppExtension)
         android.applicationVariants.all { ApplicationVariant variant ->
 
             MonkeyTestTask task = project.tasks.create("monkey${variant.name.capitalize()}", MonkeyTestTask)
@@ -61,9 +59,11 @@ class MonkeyPlugin implements Plugin<Project> {
             task.reportFile = new File(new File(project.buildDir, BuilderConstants.FD_REPORTS), "monkey${variant.name.capitalize()}.txt")
             task.outputs.upToDateWhen { false }
 
-            if (project.monkey.install) {
+            if (project.getExtensions().getByType(MonkeyPluginExtension).install) {
                 task.dependsOn(variant.assemble)
-                task.apkFile = variant.install.packageFile
+                variant.outputs.each { output ->
+                    task.apkFile = output.outputFile
+                }
             }
         }
     }

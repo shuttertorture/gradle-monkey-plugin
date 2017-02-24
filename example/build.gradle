@@ -13,7 +13,8 @@ buildscript {
 apply plugin: 'monkey'
 
 monkey {
-    eventCount = 1000
-    failOnFailure = false
-    teamCityLog = true
+	teamCityLog = true
+	failOnFailure = false
+	eventCount = 20000
+	install = true
 }

@@ -1,17 +1,24 @@
 buildscript {
-   repositories {
-      mavenCentral()
-   }
-   dependencies {
-    classpath 'com.github.townsfolk:gradle-release:1.2'
-   }
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven {
+        url 'https://plugins.gradle.org/m2/'}
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'net.researchgate:gradle-release:2.4.0'
+    }
 }
 
-apply plugin: 'groovy'
+plugins {
+    id 'net.researchgate.release' version '2.4.0'
+}
+
 apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'signing'
-apply plugin: 'release'
+apply plugin: 'groovy'
 
 group = 'com.autoscout24.gradle'
 
@@ -20,12 +27,13 @@ ext.isSnapshot = version.endsWith("-SNAPSHOT")
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
-    groovy localGroovy()
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:0.10.+'
+    compile localGroovy()
+    compile 'com.android.tools.build:gradle:2.2.3'
 }
 
 task sourceJar(type: Jar) {
@@ -79,7 +87,7 @@ uploadArchives {
 }
 
 release {
-	createReleaseTag.dependsOn uploadArchives
+    createReleaseTag.dependsOn uploadArchives
 }
 
 /**

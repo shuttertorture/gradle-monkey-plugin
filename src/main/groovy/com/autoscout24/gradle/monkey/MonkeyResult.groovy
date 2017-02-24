@@ -25,7 +25,7 @@
 package com.autoscout24.gradle.monkey
 
 // Adapted from https://github.com/jenkinsci/android-emulator-plugin/blob/master/src/main/java/hudson/plugins/android_emulator/monkey/MonkeyResult.java
-public class MonkeyResult {
+class MonkeyResult {
     final ResultStatus status;
     final int totalEventCount
     final int eventsCompleted
@@ -36,7 +36,7 @@ public class MonkeyResult {
         this.status = status
     }
 
-    public enum ResultStatus {
+    enum ResultStatus {
         /** Monkey test completed successfully */
         Success(true),
         /** Application crashed while under test */
