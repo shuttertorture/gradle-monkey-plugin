@@ -1,8 +1,10 @@
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
     }
     dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.3'
         classpath 'com.github.townsfolk:gradle-release:1.2'
     }
 }
@@ -19,13 +21,14 @@ ext.archivesBaseName = 'gradle-monkey-plugin'
 ext.isSnapshot = version.endsWith("-SNAPSHOT")
 
 repositories {
+    jcenter()
     mavenCentral()
 }
 
 dependencies {
     compile localGroovy()
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:1.5.0'
+    compile 'com.android.tools.build:gradle:2.2.3'
     compile 'de.felixschulze.teamcity:teamcity-status-message-helper:1.2'
 }
 
