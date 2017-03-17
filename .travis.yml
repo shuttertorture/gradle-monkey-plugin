@@ -5,3 +5,5 @@ script: ./gradlew clean build
 branches:
   only:
     - master
+jdk:
+    - oraclejdk8

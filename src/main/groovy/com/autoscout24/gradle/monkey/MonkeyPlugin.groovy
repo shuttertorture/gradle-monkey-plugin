@@ -48,7 +48,7 @@ class MonkeyPlugin implements Plugin<Project> {
             throw new IllegalStateException("gradle-android-plugin not found")
         }
 
-        AppExtension android = project.android
+        AppExtension android =  project.extensions.getByType(AppExtension)
         android.applicationVariants.all { ApplicationVariant variant ->
 
             MonkeyTestTask task = project.tasks.create("monkey${variant.name.capitalize()}", MonkeyTestTask)
@@ -58,12 +58,11 @@ class MonkeyPlugin implements Plugin<Project> {
             task.reportFileDirectory = new File(project.buildDir, BuilderConstants.FD_REPORTS)
             task.outputs.upToDateWhen { false }
 
-            if (project.monkey.install) {
+            if (project.extensions.getByType(MonkeyPluginExtension).install) {
                 task.dependsOn(variant.assemble)
-                if (!variant.getOutputs().isEmpty()) {
-                    task.apkFile = variant.getOutputs().get(0).getOutputFile()
+                variant.outputs.each { output ->
+                    task.apkFile = output.outputFile
                 }
-
             }
         }
     }

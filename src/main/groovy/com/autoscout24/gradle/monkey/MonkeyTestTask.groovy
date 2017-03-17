@@ -69,8 +69,8 @@ class MonkeyTestTask extends DefaultTask {
     @TaskAction
     def runMonkeyTest() throws IOException {
 
-        android = project.android
-        monkey = project.monkey
+        android = project.extensions.getByType(AppExtension)
+        monkey = project.extensions.getByType(MonkeyPluginExtension)
 
         String packageName = getPackageName()
         logger.info("Running tests for package: " + packageName)
@@ -78,10 +78,10 @@ class MonkeyTestTask extends DefaultTask {
         stdLogger = new StdLogger(StdLogger.Level.VERBOSE)
 
 
-        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(android.getAdbExe(), stdLogger)
+        ConnectedDeviceProvider cdp = new ConnectedDeviceProvider(android.getAdbExecutable(), monkey.connectTimeoutMs, stdLogger)
         cdp.init()
 
-        Collection<String> excludedDevices = project.monkey.excludedDevices
+        Collection<String> excludedDevices = monkey.excludedDevices
 
         ArrayList<MonkeyResult> results = new ArrayList<>()
         List<ConnectedDevice> devices = Lists.newArrayList()
@@ -217,9 +217,9 @@ class MonkeyTestTask extends DefaultTask {
             matcher = Pattern.compile("// (CRASH|NOT RESPONDING)").matcher(monkeyOutput);
             if (matcher.find()) {
                 String reason = matcher.group(1);
-                if ("CRASH".equals(reason)) {
+                if ("CRASH" == reason) {
                     status = MonkeyResult.ResultStatus.Crash;
-                } else if ("NOT RESPONDING".equals(reason)) {
+                } else if ("NOT RESPONDING" == reason) {
                     status = MonkeyResult.ResultStatus.AppNotResponding;
                 }
             }
@@ -255,8 +255,7 @@ class MonkeyTestTask extends DefaultTask {
             throw new GradleException("Could not find the '" + variantName + "' variant")
         }
 
-        ApplicationVariant variant = matchingVariants.iterator().next()
+        return matchingVariants.first().getGenerateBuildConfig().getAppPackageName()
 
-        VariantConfiguration.getManifestPackage(variant.getOutputs()[0].getProcessManifest().manifestOutputFile)
     }
 }
